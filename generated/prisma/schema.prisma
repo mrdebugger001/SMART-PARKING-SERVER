@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGO_URL")
+}
+
+model Admin {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  adminId      String   @unique
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Customer {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String    @unique
+  phone     String?
+  vehicles  Vehicle[]
+  createdAt DateTime  @default(now())
+}
+
+model Vehicle {
+  id         String      @id @default(auto()) @map("_id") @db.ObjectId
+  vehicleId  String      @unique
+  tagId      String      @unique
+  type       VehicleType
+  ownerName  String
+  customer   Customer?   @relation(fields: [customerId], references: [id])
+  customerId String?     @db.ObjectId
+  tickets    Ticket[]
+  createdAt  DateTime    @default(now())
+}
+
+model Slot {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  slotId     String     @unique
+  type       SlotType
+  status     SlotStatus @default(AVAILABLE)
+  occupiedBy String? // vehicleId reference (not enforced)
+  createdAt  DateTime   @default(now())
+}
+
+model Ticket {
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  ticketId  String       @unique
+  vehicleId String
+  vehicle   Vehicle      @relation(fields: [vehicleId], references: [vehicleId])
+  slotId    String
+  entryTime DateTime
+  exitTime  DateTime?
+  status    TicketStatus @default(ACTIVE)
+  totalFare Float        @default(0)
+  createdAt DateTime     @default(now())
+}
+
+enum VehicleType {
+  CAR
+  BIKE
+  TRUCK
+}
+
+enum SlotType {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+enum SlotStatus {
+  AVAILABLE
+  OCCUPIED
+}
+
+enum TicketStatus {
+  ACTIVE
+  CLOSED
+}
