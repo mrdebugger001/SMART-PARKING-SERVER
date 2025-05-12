@@ -1,0 +1,11 @@
+{
+  "name": "smart-parking-server",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "test": "node server.js"
+  },
+  "author": "Rudra H Mistry",
+  "license": "ISC",
+  "description": ""
+}
