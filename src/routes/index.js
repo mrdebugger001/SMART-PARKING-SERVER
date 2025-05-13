@@ -1,13 +1,12 @@
-const express = require('express');
-const router = express.Router();
+import express from 'express';
+import userRoutes from './userRoutes.js';
+// import vehicleRoutes from './vehicleRoutes.js';
+// import parkingRoutes from './parkingRoutes.js';
+// import bookingRoutes from './bookingRoutes.js';
+// import paymentRoutes from './paymentRoutes.js';
+// import sensorRoutes from './sensorRoutes.js';
 
-// Import route modules
-const userRoutes = require('./userRoutes');
-// const vehicleRoutes = require('./vehicleRoutes');
-// const parkingRoutes = require('./parkingRoutes');
-// const bookingRoutes = require('./bookingRoutes');
-// const paymentRoutes = require('./paymentRoutes');
-// const sensorRoutes = require('./sensorRoutes');
+const router = express.Router();
 
 // API version prefix
 const API_PREFIX = '/api/v1';
@@ -37,4 +36,4 @@ router.use(`${API_PREFIX}/*`, (req, res) => {
   });
 });
 
-module.exports = router; 
+export default router;
