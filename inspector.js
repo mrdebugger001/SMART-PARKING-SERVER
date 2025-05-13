@@ -1,5 +1,5 @@
-const app = require('./server'); // Your Express app instance
-const readline = require('readline');
+import app from './server.js'; // Your Express app instance
+import readline from 'readline';
 
 const BASE_URL = `http://localhost:${process.env.PORT || 5001}`;
 

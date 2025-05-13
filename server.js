@@ -1,12 +1,12 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const { PrismaClient } = require('@prisma/client');
-const dotenv = require('dotenv');
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import { PrismaClient } from '@prisma/client';
+import dotenv from 'dotenv';
 
 // Import routes
-const routes = require('./src/routes');
+import routes from './src/routes/index.js'; // Adjust path if needed
 
 // Load environment variables
 dotenv.config();
@@ -20,9 +20,9 @@ const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors());
-app.use(helmet()); // Helps secure Express apps with various HTTP headers
-app.use(express.json()); // Parse JSON request bodies
-app.use(morgan('dev')); // HTTP request logger
+app.use(helmet()); // Secure headers
+app.use(express.json()); // JSON parser
+app.use(morgan('dev')); // Logger
 
 // Use routes
 app.use('/', routes);
@@ -32,20 +32,18 @@ app.use((err, req, res, next) => {
   console.error('Error occurred:', err.stack);
   res.status(500).json({
     message: 'Something went wrong',
-    error: process.env.NODE_ENV === 'production' ? null : err.message
+    error: process.env.NODE_ENV === 'production' ? null : err.message,
   });
 });
 
 // Start server
 async function startServer() {
   try {
-    // Connect to the database
     await prisma.$connect();
     console.log('✅ Database connection successful');
     console.log(`📦 Connected to database: ${process.env.POSTGRES_DB}`);
     console.log(`🌐 Database host: ${process.env.POSTGRES_HOST}`);
-    
-    // Start the server
+
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`🔗 API URL: http://localhost:${PORT}`);
@@ -61,7 +59,7 @@ async function startServer() {
   }
 }
 
-// Handle graceful shutdown
+// Graceful shutdown
 process.on('SIGINT', async () => {
   await prisma.$disconnect();
   console.log('📤 Database connection closed');
@@ -74,11 +72,9 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-// At the bottom of app.js
-if (require.main === module) {
-  startServer(); // ✅ Only start server when run directly (not when imported by inspector.js)
+// Start only if run directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  startServer();
 }
 
-
-
-module.exports = app; // ✅ Still export app for inspector.js to use
+export default app; // Export for use in other modules (e.g., inspector.js)
