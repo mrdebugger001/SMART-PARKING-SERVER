@@ -9,16 +9,27 @@ datasource db {
 }
 
 model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(CLIENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts     Post[]
+  tokens    Token[]
+}
+
+model Token {
   id           Int      @id @default(autoincrement())
-  email        String   @unique
-  accesstoken  String   @unique
-  refreshtoken String   @unique
-  password     String
-  name         String
-  role         Role     @default(CLIENT)
+  accessToken  String   @unique
+  refreshToken String   @unique
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  posts        Post[]
+  expiresAt    DateTime
+  userId       Int
+  userAgent    String?
+  ipAddress    String?
+  user         User     @relation(fields: [userId], references: [id])
 }
 
 model Post {
