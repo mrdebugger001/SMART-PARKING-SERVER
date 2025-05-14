@@ -93,4 +93,9 @@ async function startServer() {
 // Start server
 startServer().catch(console.error);
 
+app.get('/', (req, res) => {
+  res.send("Hello, world! From the NODE-Prisma-STARTER");
+});
+
+
 export default app;
