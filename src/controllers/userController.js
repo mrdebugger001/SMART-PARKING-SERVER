@@ -36,14 +36,12 @@ const createUser = async (req, res) => {
         email,
         password: hashedPassword,
         name,
-        phone,
-        role: role || 'USER'
+        role: role || 'CLIENT'
       },
       select: {
         id: true,
         email: true,
         name: true,
-        phone: true,
         role: true,
         createdAt: true
       }
