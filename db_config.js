@@ -1,31 +1,55 @@
-import { Pool } from 'pg';
+import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
+import colors from 'colors';
 
 // Load environment variables
 dotenv.config();
 
-// PostgreSQL connection pool configuration
-const pool = new Pool({
-  user: process.env.POSTGRES_USER,
-  host: process.env.POSTGRES_HOST,
-  database: process.env.POSTGRES_DB,
-  password: process.env.POSTGRES_PASSWORD,
-  port: parseInt(process.env.POSTGRES_PORT || '5432'),
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: 20, // Maximum number of clients in the pool
-  idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
-  connectionTimeoutMillis: 2000, // How long to wait for a connection
+// Initialize Prisma client with logging
+const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
 });
 
-// Test the connection
-pool.on('connect', () => {
-  console.log('Connected to PostgreSQL database');
-});
+// Database connection check with timeout
+async function checkDatabaseConnection() {
+  try {
+    const connectPromise = prisma.$connect();
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Connection timeout')), 5000)
+    );
 
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
-  process.exit(-1);
-});
+    await Promise.race([connectPromise, timeoutPromise]);
+    return true;
+  } catch (error) {
+    console.error('Database connection error:', error.message.red);
+    return false;
+  }
+}
 
-export const query = (text, params) => pool.query(text, params);
-export const getPool = () => pool;
+// Enhanced shutdown handling
+async function gracefulShutdown(signal) {
+  console.log(`\n📥 Received ${signal}. Starting graceful shutdown...`.yellow);
+  try {
+    await prisma.$disconnect();
+    console.log('📤 Database connection closed successfully'.green);
+    process.exit(0);
+  } catch (error) {
+    console.log('❌ Error during graceful shutdown:'.red);
+    console.error(error);
+    process.exit(1);
+  }
+}
+
+// Setup shutdown handlers
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
+// Monitor database queries in development
+if (process.env.NODE_ENV === 'development') {
+  prisma.$on('query', (e) => {
+    console.log('👉 Query: '.blue + e.query);
+    console.log('⏱️  Duration: '.yellow + `${e.duration}ms\n`);
+  });
+}
+
+export { prisma, checkDatabaseConnection };

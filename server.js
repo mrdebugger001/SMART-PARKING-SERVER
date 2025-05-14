@@ -2,79 +2,95 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
+import colors from 'colors';
+import { networkInterfaces } from 'os';  // Fix for the require error
+
+// Import database configuration
+import { prisma, checkDatabaseConnection } from './db_config.js';
 
 // Import routes
-import routes from './src/routes/index.js'; // Adjust path if needed
+import routes from './src/routes/index.js';
 
 // Load environment variables
 dotenv.config();
 
-// Initialize Prisma client
-const prisma = new PrismaClient();
-
-// Initialize Express app
 const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 8080;
 
-// Middleware
+// Middleware setup
 app.use(cors());
-app.use(helmet()); // Secure headers
-app.use(express.json()); // JSON parser
-app.use(morgan('dev')); // Logger
+app.use(helmet());
+app.use(express.json());
+app.use(morgan('dev'));
+app.use('/api', routes);
 
-// Use routes
-app.use('/', routes);
+// Helper function to get IP address
+function getIpAddress() {
+  const nets = networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      if (net.family === 'IPv4' && !net.internal) {
+        return net.address;
+      }
+    }
+  }
+  return 'localhost';
+}
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Error occurred:', err.stack);
-  res.status(500).json({
-    message: 'Something went wrong',
-    error: process.env.NODE_ENV === 'production' ? null : err.message,
-  });
-});
-
-// Start server
+// Enhanced server startup with detailed debugging
 async function startServer() {
-  try {
-    await prisma.$connect();
-    console.log('✅ Database connection successful');
-    console.log(`📦 Connected to database: ${process.env.POSTGRES_DB}`);
-    console.log(`🌐 Database host: ${process.env.POSTGRES_HOST}`);
+  console.clear();
+  console.log('\n🚀 Initializing server...'.yellow);
+  console.log('----------------------------------'.gray);
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`🔗 API URL: http://localhost:${PORT}`);
-      console.log('📝 API Documentation available at /api/v1');
+  try {
+    // Check database connection
+    console.log('📡 Checking database connection...'.cyan);
+    const isConnected = await checkDatabaseConnection();
+
+    if (!isConnected) {
+      throw new Error('Database connection failed');
+    }
+
+    // Parse database URL for info display
+    const dbUrl = new URL(process.env.DATABASE_URL);
+    
+    // Database connection successful
+    console.log('\n✅ Database Connection Status:'.green);
+    console.log('----------------------------------'.gray);
+    console.log(`🔗 Host: ${dbUrl.hostname}`.green);
+    console.log(`📦 Database: ${dbUrl.pathname.split('/')[1]}`.green);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`.green);
+
+    // Start server
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log('\n🚀 Server Status:'.green);
+      console.log('----------------------------------'.gray);
+      console.log(`📡 Server running on port: ${PORT}`.green);
+      console.log(`🔗 Local URL: http://localhost:${PORT}`.cyan);
+      console.log(`🔗 Network URL: http://${getIpAddress()}:${PORT}`.cyan);
+      console.log(`📚 API Documentation: http://localhost:${PORT}/api/docs\n`.cyan);
     });
+
   } catch (error) {
-    console.error('❌ Database connection failed');
-    console.error('Error details:', error.message);
-    console.error('Error code:', error.code);
-    console.error('Full error:', error);
+    console.log('\n❌ Startup Error:'.red);
+    console.log('----------------------------------'.gray);
+    console.log('🔴 Server failed to start'.red);
+    console.log(`⚠️  Error: ${error.message}`.red);
+    console.log(`🔍 Code: ${error.code || 'N/A'}`.red);
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('\n🔍 Detailed Error Stack:'.yellow);
+      console.log(error.stack.red);
+    }
+
     await prisma.$disconnect();
     process.exit(1);
   }
 }
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  await prisma.$disconnect();
-  console.log('📤 Database connection closed');
-  process.exit(0);
-});
+// Start server
+startServer().catch(console.error);
 
-process.on('SIGTERM', async () => {
-  await prisma.$disconnect();
-  console.log('📤 Database connection closed');
-  process.exit(0);
-});
-
-// Start only if run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  startServer();
-}
-
-export default app; // Export for use in other modules (e.g., inspector.js)
+export default app;
