@@ -9,7 +9,7 @@ import userRoutes from './userRoutes.js';
 const router = express.Router();
 
 // API version prefix
-const API_PREFIX = '/api/v1';
+const API_PREFIX = '/v1';
 
 // Define route handlers
 router.use(`${API_PREFIX}/users`, userRoutes);

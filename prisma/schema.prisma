@@ -1,11 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/prisma-client"
 }
 
 datasource db {
@@ -14,146 +9,28 @@ datasource db {
 }
 
 model User {
-  id            Int      @id @default(autoincrement())
-  email         String   @unique
-  password      String
-  name          String
-  phone         String?
-  role          Role     @default(USER)
-  vehicles      Vehicle[]
-  bookings      Booking[]
-  payments      Payment[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(CLIENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts     Post[]
 }
 
-model Vehicle {
-  id            Int      @id @default(autoincrement())
-  licensePlate  String   @unique
-  type          VehicleType
-  model         String?
-  userId        Int
-  user          User     @relation(fields: [userId], references: [id])
-  bookings      Booking[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-model ParkingSpace {
-  id            Int      @id @default(autoincrement())
-  spaceNumber   String   @unique
-  floorNumber   Int?
-  type          SpaceType
-  status        SpaceStatus @default(AVAILABLE)
-  hourlyRate    Float
-  bookings      Booking[]
-  sensors       Sensor[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-model Booking {
-  id            Int      @id @default(autoincrement())
-  startTime     DateTime
-  endTime       DateTime?
-  status        BookingStatus @default(PENDING)
-  totalCost     Float?
-  userId        Int
-  user          User     @relation(fields: [userId], references: [id])
-  vehicleId     Int
-  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id])
-  parkingSpaceId Int
-  parkingSpace  ParkingSpace @relation(fields: [parkingSpaceId], references: [id])
-  payment       Payment?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-model Payment {
-  id            Int      @id @default(autoincrement())
-  amount        Float
-  status        PaymentStatus @default(PENDING)
-  method        PaymentMethod
-  transactionId String?  @unique
-  bookingId     Int      @unique
-  booking       Booking  @relation(fields: [bookingId], references: [id])
-  userId        Int
-  user          User     @relation(fields: [userId], references: [id])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-model Sensor {
-  id            Int      @id @default(autoincrement())
-  deviceId      String   @unique
-  type          SensorType
-  status        SensorStatus @default(ACTIVE)
-  lastReading   DateTime?
-  parkingSpaceId Int
-  parkingSpace  ParkingSpace @relation(fields: [parkingSpaceId], references: [id])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+model Post {
+  id        Int      @id @default(autoincrement())
+  imgUrl    String
+  caption   String
+  comments  String[] @default([])
+  authorId  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author    User     @relation(fields: [authorId], references: [id])
 }
 
 enum Role {
   ADMIN
-  STAFF
-  USER
-}
-
-enum VehicleType {
-  CAR
-  MOTORCYCLE
-  VAN
-  TRUCK
-}
-
-enum SpaceType {
-  STANDARD
-  COMPACT
-  HANDICAP
-  ELECTRIC
-}
-
-enum SpaceStatus {
-  AVAILABLE
-  OCCUPIED
-  RESERVED
-  MAINTENANCE
-}
-
-enum BookingStatus {
-  PENDING
-  CONFIRMED
-  ACTIVE
-  COMPLETED
-  CANCELLED
-}
-
-enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  REFUNDED
-}
-
-enum PaymentMethod {
-  CREDIT_CARD
-  DEBIT_CARD
-  PAYPAL
-  BANK_TRANSFER
-  CASH
-}
-
-enum SensorType {
-  OCCUPANCY
-  GATE
-  TEMPERATURE
-  AIR_QUALITY
-}
-
-enum SensorStatus {
-  ACTIVE
-  INACTIVE
-  MAINTENANCE
+  CLIENT
 }
