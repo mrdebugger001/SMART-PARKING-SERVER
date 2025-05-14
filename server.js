@@ -7,7 +7,7 @@ import colors from 'colors';
 import { networkInterfaces } from 'os';  // Fix for the require error
 
 // Import database configuration
-import { prisma, checkDatabaseConnection } from './db_config.js';
+import { prisma, checkDatabaseConnection } from './src/config/db_config.js';
 
 // Import routes
 import routes from './src/routes/index.js';
