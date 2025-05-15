@@ -28,7 +28,7 @@ model Token {
   expiresAt    DateTime
   userId       Int
   userAgent    String?
-  ipAddress    String?
+  ipAddress    String? //demo
   user         User     @relation(fields: [userId], references: [id])
 }
 
